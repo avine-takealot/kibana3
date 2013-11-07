@@ -15,9 +15,11 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
   module.service('dashboard', function(
     $routeParams, $http, $rootScope, $injector, $location, $timeout,
-    ejsResource, timer, kbnIndex, alertSrv
+    ejsResource, timer, kbnIndex, alertSrv, esVersion
   ) {
     // A hash of defaults to use when loading a dashboard
+
+    var minVersion = '0.90.6';
 
     var _dash = {
       title: "",
@@ -78,7 +80,15 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Clear the current dashboard to prevent reloading
       self.current = {};
       self.indices = [];
-      route();
+
+      // Only initialize the route if our version is high enough
+      esVersion.getVersions().then(function() {
+        if(esVersion.is('<'+minVersion)) {
+          alertSrv.set('Version mismatch','This version of Kibana requires at least Elasticsearch '+minVersion,'error');
+        } else {
+          route();
+        }
+      });
     });
 
     var route = function() {
@@ -158,8 +168,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         }
       } else {
         self.indices = [self.current.index.default];
-        console.log(self.indices);
-        console.log('sending refresh');
         querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
       }
     };

@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('esVersion', function($http, alertSrv) {
+  module.service('esVersion', function($http, $q, alertSrv) {
 
     this.versions = [];
 
@@ -16,10 +16,15 @@ function (angular, _, config) {
     var self = this;
 
     this.init = function() {
-      getVersions();
+      self.getVersions();
     };
 
-    var getVersions = function() {
+    this.getVersions = function() {
+      if(this.versions.length) {
+        var p = $q.defer();
+        p.resolve(this.versions);
+        return p.promise;
+      }
       var nodeInfo = $http({
         url: config.elasticsearch + '/_nodes',
         method: "GET"
@@ -38,6 +43,7 @@ function (angular, _, config) {
           self.versions.push(v.version.split('-')[0]);
         });
         self.versions = sortVersions(_.uniq(self.versions));
+        return self.versions;
       });
     };
 
