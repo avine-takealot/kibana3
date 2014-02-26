@@ -203,6 +203,15 @@ function (angular, app, _, $, kbn) {
           $scope.hits = results.hits.total;
         }
 
+        if ($scope.panel.tmode == 'terms_stats'){
+		    _.each(results['facets']['terms']['terms'], function(item){
+                item['ratio_count'] = 0.1;
+                if (item['count'] > 0){
+			        item['ratio_count'] = item['total_count'] / item['count'];
+                } 
+           });
+        }
+
         $scope.results = results;
 
         $scope.$emit('render');
